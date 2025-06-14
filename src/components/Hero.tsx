@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Logo } from "./Logo";
 import { PoweredBy } from "./PoweredBy";
@@ -6,6 +7,7 @@ const Hero = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [lines, setLines] = useState<Array<{ x1: number; y1: number; x2: number; y2: number; opacity: number; strokeWidth: number }>>([]);
+  const [isPulseDark, setIsPulseDark] = useState(false);
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -19,21 +21,29 @@ const Hero = () => {
       title: "Free Shop Generator",
       subtitle: "Free Today, Free Forever",
       description: "Create unlimited e-commerce stores without any cost. No hidden fees, no premium tiers - just pure freedom to build your dream shop.",
-      accent: "from-red-500 to-red-700"
+      accent: isPulseDark ? "from-gray-500 to-gray-700" : "from-red-500 to-red-700"
     },
     {
       title: "Shopify But Free",
       subtitle: "All Features, Zero Cost", 
       description: "Get all the powerful features of premium platforms without spending a dime. Professional templates, payment processing, and analytics included.",
-      accent: "from-red-600 to-red-800"
+      accent: isPulseDark ? "from-gray-600 to-gray-800" : "from-red-600 to-red-800"
     },
     {
       title: "Unlimited Possibilities",
       subtitle: "No Limits, No Restrictions",
       description: "Scale your business without worrying about transaction fees or monthly subscriptions. Your success is our success.",
-      accent: "from-red-700 to-red-900"
+      accent: isPulseDark ? "from-gray-700 to-gray-900" : "from-red-700 to-red-900"
     }
   ];
+
+  // Theme pulsing effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsPulseDark(prev => !prev);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Countdown timer effect
   useEffect(() => {
@@ -59,7 +69,7 @@ const Hero = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Complex spider web cursor tracking with 100+ lines
+  // Enhanced spider web cursor tracking with all lines following cursor
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (containerRef.current) {
@@ -68,11 +78,11 @@ const Hero = () => {
         const y = e.clientY - rect.top;
         setMousePosition({ x, y });
 
-        // Create complex spider web effect with multiple layers
+        // Create complex spider web effect with all lines following cursor
         const newLines = [];
         
-        // Create a dense grid of anchor points for the web
-        const gridSize = 8; // 8x8 grid = 64 anchor points
+        // Create a dense grid of anchor points that all connect to cursor
+        const gridSize = 8;
         const webPoints = [];
         
         // Generate grid-based anchor points
@@ -86,7 +96,7 @@ const Hero = () => {
           }
         }
         
-        // Add random scattered points for more organic feel
+        // Add random scattered points
         const randomPoints = [
           { x: rect.width * 0.15, y: rect.height * 0.25, id: 'r1' },
           { x: rect.width * 0.85, y: rect.height * 0.15, id: 'r2' },
@@ -100,17 +110,22 @@ const Hero = () => {
         
         const allPoints = [...webPoints, ...randomPoints];
 
-        // 1. Cursor to nearby points (radial connections)
+        // 1. All points connect to cursor with dynamic following
         allPoints.forEach((point) => {
           const distance = Math.sqrt((x - point.x) ** 2 + (y - point.y) ** 2);
-          const maxDistance = 300;
+          const maxDistance = 400;
           
           if (distance < maxDistance) {
-            const opacity = Math.max(0, 0.9 - (distance / maxDistance));
+            const opacity = Math.max(0.1, 0.9 - (distance / maxDistance));
             const strokeWidth = opacity > 0.6 ? 2 : 1;
+            
+            // Create dynamic line that follows cursor movement
+            const followX = point.x + (x - point.x) * 0.3;
+            const followY = point.y + (y - point.y) * 0.3;
+            
             newLines.push({
-              x1: point.x,
-              y1: point.y,
+              x1: followX,
+              y1: followY,
               x2: x,
               y2: y,
               opacity: opacity,
@@ -119,7 +134,7 @@ const Hero = () => {
           }
         });
 
-        // 2. Create horizontal web lines
+        // 2. Create horizontal web lines that bend toward cursor
         for (let i = 0; i < gridSize; i++) {
           for (let j = 0; j < gridSize - 1; j++) {
             const point1 = webPoints[i * gridSize + j];
@@ -129,11 +144,27 @@ const Hero = () => {
               Math.sqrt((x - point2.x) ** 2 + (y - point2.y) ** 2)
             );
             
-            if (cursorDistance < 250) {
-              const opacity = Math.max(0, 0.4 - (cursorDistance / 400));
+            if (cursorDistance < 300) {
+              const opacity = Math.max(0.1, 0.6 - (cursorDistance / 400));
+              
+              // Bend lines toward cursor
+              const midX = (point1.x + point2.x) / 2;
+              const midY = (point1.y + point2.y) / 2;
+              const bendX = midX + (x - midX) * 0.2;
+              const bendY = midY + (y - midY) * 0.2;
+              
               newLines.push({
                 x1: point1.x,
                 y1: point1.y,
+                x2: bendX,
+                y2: bendY,
+                opacity: opacity,
+                strokeWidth: 1
+              });
+              
+              newLines.push({
+                x1: bendX,
+                y1: bendY,
                 x2: point2.x,
                 y2: point2.y,
                 opacity: opacity,
@@ -143,7 +174,7 @@ const Hero = () => {
           }
         }
 
-        // 3. Create vertical web lines
+        // 3. Create vertical web lines that bend toward cursor
         for (let i = 0; i < gridSize - 1; i++) {
           for (let j = 0; j < gridSize; j++) {
             const point1 = webPoints[i * gridSize + j];
@@ -153,11 +184,26 @@ const Hero = () => {
               Math.sqrt((x - point2.x) ** 2 + (y - point2.y) ** 2)
             );
             
-            if (cursorDistance < 250) {
-              const opacity = Math.max(0, 0.4 - (cursorDistance / 400));
+            if (cursorDistance < 300) {
+              const opacity = Math.max(0.1, 0.6 - (cursorDistance / 400));
+              
+              const midX = (point1.x + point2.x) / 2;
+              const midY = (point1.y + point2.y) / 2;
+              const bendX = midX + (x - midX) * 0.2;
+              const bendY = midY + (y - midY) * 0.2;
+              
               newLines.push({
                 x1: point1.x,
                 y1: point1.y,
+                x2: bendX,
+                y2: bendY,
+                opacity: opacity,
+                strokeWidth: 1
+              });
+              
+              newLines.push({
+                x1: bendX,
+                y1: bendY,
                 x2: point2.x,
                 y2: point2.y,
                 opacity: opacity,
@@ -167,53 +213,9 @@ const Hero = () => {
           }
         }
 
-        // 4. Create diagonal connections
-        for (let i = 0; i < gridSize - 1; i++) {
-          for (let j = 0; j < gridSize - 1; j++) {
-            const point1 = webPoints[i * gridSize + j];
-            const point2 = webPoints[(i + 1) * gridSize + j + 1];
-            const point3 = webPoints[i * gridSize + j + 1];
-            const point4 = webPoints[(i + 1) * gridSize + j];
-            
-            const cursorDistance1 = Math.min(
-              Math.sqrt((x - point1.x) ** 2 + (y - point1.y) ** 2),
-              Math.sqrt((x - point2.x) ** 2 + (y - point2.y) ** 2)
-            );
-            
-            const cursorDistance2 = Math.min(
-              Math.sqrt((x - point3.x) ** 2 + (y - point3.y) ** 2),
-              Math.sqrt((x - point4.x) ** 2 + (y - point4.y) ** 2)
-            );
-            
-            if (cursorDistance1 < 200) {
-              const opacity = Math.max(0, 0.3 - (cursorDistance1 / 400));
-              newLines.push({
-                x1: point1.x,
-                y1: point1.y,
-                x2: point2.x,
-                y2: point2.y,
-                opacity: opacity,
-                strokeWidth: 1
-              });
-            }
-            
-            if (cursorDistance2 < 200) {
-              const opacity = Math.max(0, 0.3 - (cursorDistance2 / 400));
-              newLines.push({
-                x1: point3.x,
-                y1: point3.y,
-                x2: point4.x,
-                y2: point4.y,
-                opacity: opacity,
-                strokeWidth: 1
-              });
-            }
-          }
-        }
-
-        // 5. Create concentric circles around cursor
-        const circleRadii = [50, 100, 150, 200];
-        const pointsPerCircle = 16;
+        // 4. Create concentric circles around cursor that follow movement
+        const circleRadii = [60, 120, 180, 240];
+        const pointsPerCircle = 20;
         
         circleRadii.forEach((radius, radiusIndex) => {
           const circlePoints = [];
@@ -225,10 +227,9 @@ const Hero = () => {
             });
           }
           
-          // Connect circle points
           for (let i = 0; i < circlePoints.length; i++) {
             const nextIndex = (i + 1) % circlePoints.length;
-            const opacity = Math.max(0, 0.3 - (radiusIndex * 0.05));
+            const opacity = Math.max(0.1, 0.5 - (radiusIndex * 0.08));
             
             if (circlePoints[i].x > 0 && circlePoints[i].x < rect.width && 
                 circlePoints[i].y > 0 && circlePoints[i].y < rect.height &&
@@ -246,7 +247,32 @@ const Hero = () => {
           }
         });
 
-        // 6. Connect random points to create more complex web patterns
+        // 5. Create spiral that follows cursor movement
+        const spiralPoints = [];
+        for (let i = 0; i < 30; i++) {
+          const angle = (i / 30) * 6 * Math.PI;
+          const radius = i * 6;
+          const spiralX = x + Math.cos(angle) * radius;
+          const spiralY = y + Math.sin(angle) * radius;
+          
+          if (spiralX > 0 && spiralX < rect.width && spiralY > 0 && spiralY < rect.height) {
+            spiralPoints.push({ x: spiralX, y: spiralY });
+          }
+        }
+        
+        for (let i = 0; i < spiralPoints.length - 1; i++) {
+          const opacity = Math.max(0.1, 0.7 - (i * 0.02));
+          newLines.push({
+            x1: spiralPoints[i].x,
+            y1: spiralPoints[i].y,
+            x2: spiralPoints[i + 1].x,
+            y2: spiralPoints[i + 1].y,
+            opacity: opacity,
+            strokeWidth: 2
+          });
+        }
+
+        // 6. Cross-connections that bend toward cursor
         randomPoints.forEach((point1, index1) => {
           randomPoints.forEach((point2, index2) => {
             if (index1 !== index2) {
@@ -256,46 +282,35 @@ const Hero = () => {
                 Math.sqrt((x - point2.x) ** 2 + (y - point2.y) ** 2)
               );
               
-              if (pointDistance < 400 && cursorDistance < 300) {
-                const opacity = Math.max(0, 0.5 - (cursorDistance / 300));
+              if (pointDistance < 500 && cursorDistance < 400) {
+                const opacity = Math.max(0.1, 0.7 - (cursorDistance / 400));
+                
+                const midX = (point1.x + point2.x) / 2;
+                const midY = (point1.y + point2.y) / 2;
+                const bendX = midX + (x - midX) * 0.3;
+                const bendY = midY + (y - midY) * 0.3;
+                
                 newLines.push({
                   x1: point1.x,
                   y1: point1.y,
+                  x2: bendX,
+                  y2: bendY,
+                  opacity: opacity,
+                  strokeWidth: opacity > 0.4 ? 2 : 1
+                });
+                
+                newLines.push({
+                  x1: bendX,
+                  y1: bendY,
                   x2: point2.x,
                   y2: point2.y,
                   opacity: opacity,
-                  strokeWidth: opacity > 0.3 ? 2 : 1
+                  strokeWidth: opacity > 0.4 ? 2 : 1
                 });
               }
             }
           });
         });
-
-        // 7. Create spiral connections from cursor
-        const spiralPoints = [];
-        for (let i = 0; i < 20; i++) {
-          const angle = (i / 20) * 4 * Math.PI;
-          const radius = i * 8;
-          spiralPoints.push({
-            x: x + Math.cos(angle) * radius,
-            y: y + Math.sin(angle) * radius
-          });
-        }
-        
-        for (let i = 0; i < spiralPoints.length - 1; i++) {
-          if (spiralPoints[i].x > 0 && spiralPoints[i].x < rect.width && 
-              spiralPoints[i].y > 0 && spiralPoints[i].y < rect.height) {
-            const opacity = Math.max(0, 0.6 - (i * 0.03));
-            newLines.push({
-              x1: spiralPoints[i].x,
-              y1: spiralPoints[i].y,
-              x2: spiralPoints[i + 1].x,
-              y2: spiralPoints[i + 1].y,
-              opacity: opacity,
-              strokeWidth: 1
-            });
-          }
-        }
 
         setLines(newLines);
       }
@@ -315,11 +330,35 @@ const Hero = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Dynamic theme colors based on pulse state
+  const themeColors = {
+    gradient: isPulseDark 
+      ? "from-black via-gray-950 to-gray-900" 
+      : "from-black via-red-950 to-gray-900",
+    radialAccents: isPulseDark ? [
+      "bg-[radial-gradient(circle_at_20%_30%,rgba(75,85,99,0.25),transparent_50%)]",
+      "bg-[radial-gradient(circle_at_80%_70%,rgba(55,65,81,0.2),transparent_50%)]",
+      "bg-[radial-gradient(circle_at_50%_50%,rgba(107,114,128,0.15),transparent_70%)]"
+    ] : [
+      "bg-[radial-gradient(circle_at_20%_30%,rgba(239,68,68,0.25),transparent_50%)]",
+      "bg-[radial-gradient(circle_at_80%_70%,rgba(185,28,28,0.2),transparent_50%)]",
+      "bg-[radial-gradient(circle_at_50%_50%,rgba(220,38,38,0.15),transparent_70%)]"
+    ],
+    webGradient: isPulseDark ? "grayGradient" : "redGradient",
+    primaryColor: isPulseDark ? "gray" : "red",
+    accentColor: isPulseDark ? "gray-400" : "red-400"
+  };
+
   return (
     <div 
       ref={containerRef}
-      className="flex flex-col items-center justify-center min-h-screen px-4 text-center relative overflow-hidden"
+      className={`flex flex-col items-center justify-center min-h-screen px-4 text-center relative overflow-hidden transition-all duration-1000 bg-gradient-to-br ${themeColors.gradient}`}
     >
+      {/* Enhanced animated background patterns with theme switching */}
+      <div className={`absolute inset-0 transition-opacity duration-1000 ${themeColors.radialAccents[0]}`}></div>
+      <div className={`absolute inset-0 transition-opacity duration-1000 ${themeColors.radialAccents[1]}`}></div>
+      <div className={`absolute inset-0 transition-opacity duration-1000 ${themeColors.radialAccents[2]}`}></div>
+      
       {/* Complex spider web cursor tracking */}
       <svg 
         className="absolute inset-0 w-full h-full pointer-events-none z-10"
@@ -332,10 +371,10 @@ const Hero = () => {
             y1={line.y1}
             x2={line.x2}
             y2={line.y2}
-            stroke="url(#redGradient)"
+            stroke={`url(#${themeColors.webGradient})`}
             strokeWidth={line.strokeWidth}
             opacity={line.opacity}
-            className="animate-pulse"
+            className="transition-all duration-100"
           />
         ))}
         <defs>
@@ -344,120 +383,207 @@ const Hero = () => {
             <stop offset="50%" stopColor="#dc2626" />
             <stop offset="100%" stopColor="#b91c1c" />
           </linearGradient>
+          <linearGradient id="grayGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#6b7280" />
+            <stop offset="50%" stopColor="#4b5563" />
+            <stop offset="100%" stopColor="#374151" />
+          </linearGradient>
         </defs>
       </svg>
 
-      {/* Enhanced animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Primary gradient orbs with red-black theme */}
-        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-red-600/40 via-red-800/30 to-transparent rounded-full animate-pulse-slow"></div>
-        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-red-700/35 via-black/25 to-transparent rounded-full animate-pulse delay-1000"></div>
+      {/* Enhanced animated background elements with theme transition */}
+      <div className="absolute inset-0 overflow-hidden transition-all duration-1000">
+        {/* Primary gradient orbs with theme switching */}
+        <div className={`absolute -top-1/2 -left-1/2 w-full h-full transition-all duration-1000 rounded-full animate-pulse-slow ${
+          isPulseDark 
+            ? "bg-gradient-to-br from-gray-600/40 via-gray-800/30 to-transparent" 
+            : "bg-gradient-to-br from-red-600/40 via-red-800/30 to-transparent"
+        }`}></div>
+        <div className={`absolute -bottom-1/2 -right-1/2 w-full h-full transition-all duration-1000 rounded-full animate-pulse delay-1000 ${
+          isPulseDark 
+            ? "bg-gradient-to-tl from-gray-700/35 via-black/25 to-transparent" 
+            : "bg-gradient-to-tl from-red-700/35 via-black/25 to-transparent"
+        }`}></div>
         
-        {/* Multiple floating orbs with red tones */}
-        <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-gradient-to-r from-red-500/25 to-red-600/20 rounded-full blur-xl animate-float-slow"></div>
-        <div className="absolute bottom-1/3 right-1/3 w-24 h-24 bg-gradient-to-r from-red-700/30 to-red-800/25 rounded-full blur-lg animate-float delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 w-16 h-16 bg-gradient-to-r from-red-400/35 to-red-500/30 rounded-full blur-md animate-float-random delay-3000"></div>
+        {/* Multiple floating orbs with theme colors */}
+        <div className={`absolute top-1/4 left-1/4 w-32 h-32 transition-all duration-1000 rounded-full blur-xl animate-float-slow ${
+          isPulseDark 
+            ? "bg-gradient-to-r from-gray-500/25 to-gray-600/20" 
+            : "bg-gradient-to-r from-red-500/25 to-red-600/20"
+        }`}></div>
+        <div className={`absolute bottom-1/3 right-1/3 w-24 h-24 transition-all duration-1000 rounded-full blur-lg animate-float delay-2000 ${
+          isPulseDark 
+            ? "bg-gradient-to-r from-gray-700/30 to-gray-800/25" 
+            : "bg-gradient-to-r from-red-700/30 to-red-800/25"
+        }`}></div>
         
-        {/* Enhanced animated grid pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(239,68,68,.06)_1px,transparent_1px),linear-gradient(90deg,rgba(239,68,68,.06)_1px,transparent_1px)] bg-[size:50px_50px] animate-grid-move"></div>
+        {/* Enhanced grid pattern with theme colors */}
+        <div className={`absolute inset-0 transition-all duration-1000 animate-grid-move ${
+          isPulseDark 
+            ? "bg-[linear-gradient(rgba(107,114,128,.06)_1px,transparent_1px),linear-gradient(90deg,rgba(107,114,128,.06)_1px,transparent_1px)] bg-[size:50px_50px]"
+            : "bg-[linear-gradient(rgba(239,68,68,.06)_1px,transparent_1px),linear-gradient(90deg,rgba(239,68,68,.06)_1px,transparent_1px)] bg-[size:50px_50px]"
+        }`}></div>
         
-        {/* Particle system with red theme */}
-        <div className="absolute top-20 left-10 w-2 h-2 bg-red-500/70 rounded-full animate-bounce-slow"></div>
-        <div className="absolute top-32 right-16 w-1.5 h-1.5 bg-red-600/70 rounded-full animate-bounce delay-500"></div>
-        <div className="absolute bottom-40 left-20 w-3 h-3 bg-red-700/70 rounded-full animate-bounce delay-1000"></div>
-        <div className="absolute bottom-60 right-32 w-2.5 h-2.5 bg-red-800/70 rounded-full animate-bounce delay-1500"></div>
+        {/* Particle system with theme colors */}
+        <div className={`absolute top-20 left-10 w-2 h-2 rounded-full animate-bounce-slow transition-all duration-1000 ${
+          isPulseDark ? "bg-gray-500/70" : "bg-red-500/70"
+        }`}></div>
+        <div className={`absolute top-32 right-16 w-1.5 h-1.5 rounded-full animate-bounce delay-500 transition-all duration-1000 ${
+          isPulseDark ? "bg-gray-600/70" : "bg-red-600/70"
+        }`}></div>
 
-        {/* Spinning Diamond Element */}
+        {/* Spinning Diamond Element with theme colors */}
         <div className="absolute top-1/4 right-1/4 animate-spin-slow">
           <div className="relative w-16 h-16">
-            {/* Outer glow */}
-            <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-700 opacity-60 blur-lg rotate-45 animate-pulse"></div>
-            {/* Main diamond */}
-            <div className="absolute inset-2 bg-gradient-to-br from-red-600 via-red-700 to-red-800 rotate-45 shadow-lg shadow-red-500/50"></div>
-            {/* Inner highlight */}
-            <div className="absolute inset-4 bg-gradient-to-tl from-red-400 to-red-500 rotate-45 opacity-80"></div>
-            {/* Center core */}
+            <div className={`absolute inset-0 opacity-60 blur-lg rotate-45 animate-pulse transition-all duration-1000 ${
+              isPulseDark 
+                ? "bg-gradient-to-r from-gray-500 to-gray-700" 
+                : "bg-gradient-to-r from-red-500 to-red-700"
+            }`}></div>
+            <div className={`absolute inset-2 rotate-45 shadow-lg transition-all duration-1000 ${
+              isPulseDark 
+                ? "bg-gradient-to-br from-gray-600 via-gray-700 to-gray-800 shadow-gray-500/50" 
+                : "bg-gradient-to-br from-red-600 via-red-700 to-red-800 shadow-red-500/50"
+            }`}></div>
+            <div className={`absolute inset-4 rotate-45 opacity-80 transition-all duration-1000 ${
+              isPulseDark 
+                ? "bg-gradient-to-tl from-gray-400 to-gray-500" 
+                : "bg-gradient-to-tl from-red-400 to-red-500"
+            }`}></div>
             <div className="absolute inset-6 bg-white rotate-45 opacity-90 animate-pulse"></div>
           </div>
         </div>
 
-        {/* Spinning Hexagon Element */}
+        {/* Spinning Hexagon Element with theme colors */}
         <div className="absolute bottom-1/4 left-1/4 animate-spin-reverse">
           <div className="relative w-12 h-12">
-            <div className="absolute inset-0 bg-gradient-to-r from-red-700 to-red-900 opacity-70 blur-md" style={{ clipPath: 'polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%)' }}></div>
-            <div className="absolute inset-2 bg-gradient-to-br from-red-600 to-red-800" style={{ clipPath: 'polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%)' }}></div>
-            <div className="absolute inset-4 bg-red-400 opacity-90 animate-pulse" style={{ clipPath: 'polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%)' }}></div>
+            <div className={`absolute inset-0 opacity-70 blur-md transition-all duration-1000 ${
+              isPulseDark 
+                ? "bg-gradient-to-r from-gray-700 to-gray-900" 
+                : "bg-gradient-to-r from-red-700 to-red-900"
+            }`} style={{ clipPath: 'polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%)' }}></div>
+            <div className={`absolute inset-2 transition-all duration-1000 ${
+              isPulseDark 
+                ? "bg-gradient-to-br from-gray-600 to-gray-800" 
+                : "bg-gradient-to-br from-red-600 to-red-800"
+            }`} style={{ clipPath: 'polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%)' }}></div>
+            <div className={`absolute inset-4 opacity-90 animate-pulse transition-all duration-1000 ${
+              isPulseDark ? "bg-gray-400" : "bg-red-400"
+            }`} style={{ clipPath: 'polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%)' }}></div>
           </div>
         </div>
       </div>
       
-      {/* Main content */}
+      {/* Main content with theme transitions */}
       <div className="relative z-20 space-y-12 max-w-6xl mx-auto">
         {/* Logo with enhanced animation */}
         <div className="animate-slide-up">
           <Logo />
         </div>
         
-        {/* Coming Soon with enhanced glow effect */}
+        {/* Coming Soon with enhanced glow effect and theme colors */}
         <div className="animate-slide-up delay-300">
           <div className="relative">
             <p className="text-4xl md:text-5xl lg:text-6xl font-light text-gray-200 tracking-widest animate-pulse-text">
               COMING SOON
             </p>
-            <div className="absolute inset-0 text-4xl md:text-5xl lg:text-6xl font-light text-transparent bg-gradient-to-r from-red-500 via-red-600 to-red-800 bg-clip-text animate-gradient-shift opacity-60"></div>
+            <div className={`absolute inset-0 text-4xl md:text-5xl lg:text-6xl font-light text-transparent bg-clip-text animate-gradient-shift opacity-60 transition-all duration-1000 ${
+              isPulseDark 
+                ? "bg-gradient-to-r from-gray-500 via-gray-600 to-gray-800" 
+                : "bg-gradient-to-r from-red-500 via-red-600 to-red-800"
+            }`}></div>
           </div>
           
-          {/* Countdown Timer */}
+          {/* Countdown Timer with theme colors */}
           <div className="mt-8 animate-slide-up delay-500">
             <div className="flex justify-center items-center space-x-4 md:space-x-8">
               <div className="text-center">
-                <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-lg p-3 md:p-4 shadow-lg shadow-red-500/30 border border-red-500/30">
+                <div className={`rounded-lg p-3 md:p-4 shadow-lg border transition-all duration-1000 ${
+                  isPulseDark 
+                    ? "bg-gradient-to-br from-gray-600 to-gray-800 shadow-gray-500/30 border-gray-500/30" 
+                    : "bg-gradient-to-br from-red-600 to-red-800 shadow-red-500/30 border-red-500/30"
+                }`}>
                   <div className="text-2xl md:text-3xl font-bold text-white">{timeLeft.days}</div>
-                  <div className="text-xs md:text-sm text-red-200 uppercase tracking-wider">Days</div>
+                  <div className={`text-xs md:text-sm uppercase tracking-wider transition-all duration-1000 ${
+                    isPulseDark ? "text-gray-200" : "text-red-200"
+                  }`}>Days</div>
                 </div>
               </div>
-              <div className="text-red-400 text-2xl md:text-3xl animate-pulse">:</div>
+              <div className={`text-2xl md:text-3xl animate-pulse transition-all duration-1000 ${
+                isPulseDark ? "text-gray-400" : "text-red-400"
+              }`}>:</div>
               <div className="text-center">
-                <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-lg p-3 md:p-4 shadow-lg shadow-red-500/30 border border-red-500/30">
+                <div className={`rounded-lg p-3 md:p-4 shadow-lg border transition-all duration-1000 ${
+                  isPulseDark 
+                    ? "bg-gradient-to-br from-gray-600 to-gray-800 shadow-gray-500/30 border-gray-500/30" 
+                    : "bg-gradient-to-br from-red-600 to-red-800 shadow-red-500/30 border-red-500/30"
+                }`}>
                   <div className="text-2xl md:text-3xl font-bold text-white">{timeLeft.hours}</div>
-                  <div className="text-xs md:text-sm text-red-200 uppercase tracking-wider">Hours</div>
+                  <div className={`text-xs md:text-sm uppercase tracking-wider transition-all duration-1000 ${
+                    isPulseDark ? "text-gray-200" : "text-red-200"
+                  }`}>Hours</div>
                 </div>
               </div>
-              <div className="text-red-400 text-2xl md:text-3xl animate-pulse">:</div>
+              <div className={`text-2xl md:text-3xl animate-pulse transition-all duration-1000 ${
+                isPulseDark ? "text-gray-400" : "text-red-400"
+              }`}>:</div>
               <div className="text-center">
-                <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-lg p-3 md:p-4 shadow-lg shadow-red-500/30 border border-red-500/30">
+                <div className={`rounded-lg p-3 md:p-4 shadow-lg border transition-all duration-1000 ${
+                  isPulseDark 
+                    ? "bg-gradient-to-br from-gray-600 to-gray-800 shadow-gray-500/30 border-gray-500/30" 
+                    : "bg-gradient-to-br from-red-600 to-red-800 shadow-red-500/30 border-red-500/30"
+                }`}>
                   <div className="text-2xl md:text-3xl font-bold text-white">{timeLeft.minutes}</div>
-                  <div className="text-xs md:text-sm text-red-200 uppercase tracking-wider">Minutes</div>
+                  <div className={`text-xs md:text-sm uppercase tracking-wider transition-all duration-1000 ${
+                    isPulseDark ? "text-gray-200" : "text-red-200"
+                  }`}>Minutes</div>
                 </div>
               </div>
-              <div className="text-red-400 text-2xl md:text-3xl animate-pulse">:</div>
+              <div className={`text-2xl md:text-3xl animate-pulse transition-all duration-1000 ${
+                isPulseDark ? "text-gray-400" : "text-red-400"
+              }`}>:</div>
               <div className="text-center">
-                <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-lg p-3 md:p-4 shadow-lg shadow-red-500/30 border border-red-500/30">
+                <div className={`rounded-lg p-3 md:p-4 shadow-lg border transition-all duration-1000 ${
+                  isPulseDark 
+                    ? "bg-gradient-to-br from-gray-600 to-gray-800 shadow-gray-500/30 border-gray-500/30" 
+                    : "bg-gradient-to-br from-red-600 to-red-800 shadow-red-500/30 border-red-500/30"
+                }`}>
                   <div className="text-2xl md:text-3xl font-bold text-white animate-pulse">{timeLeft.seconds}</div>
-                  <div className="text-xs md:text-sm text-red-200 uppercase tracking-wider">Seconds</div>
+                  <div className={`text-xs md:text-sm uppercase tracking-wider transition-all duration-1000 ${
+                    isPulseDark ? "text-gray-200" : "text-red-200"
+                  }`}>Seconds</div>
                 </div>
               </div>
             </div>
-            <p className="text-red-300 text-sm md:text-base mt-4 animate-fade-in delay-1000">
+            <p className={`text-sm md:text-base mt-4 animate-fade-in delay-1000 transition-all duration-1000 ${
+              isPulseDark ? "text-gray-300" : "text-red-300"
+            }`}>
               Launch Date: June 22, 2025
             </p>
           </div>
         </div>
         
-        {/* Slogan with enhanced styling */}
+        {/* Slogan with enhanced styling and theme colors */}
         <div className="animate-slide-up delay-500">
           <div className="relative">
             <p className="text-2xl md:text-3xl lg:text-4xl font-medium text-gray-100 italic relative z-10 mb-8">
-              <span className="bg-gradient-to-r from-red-400 via-red-500 to-red-600 bg-clip-text text-transparent animate-gradient-shift">
+              <span className={`bg-clip-text text-transparent animate-gradient-shift transition-all duration-1000 ${
+                isPulseDark 
+                  ? "bg-gradient-to-r from-gray-400 via-gray-500 to-gray-600" 
+                  : "bg-gradient-to-r from-red-400 via-red-500 to-red-600"
+              }`}>
                 "Liberating the e-commerce stage"
               </span>
             </p>
-            {/* Enhanced decorative quotes */}
-            <div className="absolute -top-6 -left-6 text-7xl text-red-500/40 animate-float">"</div>
-            <div className="absolute -bottom-6 -right-6 text-7xl text-red-600/40 animate-float delay-1000">"</div>
+            <div className={`absolute -top-6 -left-6 text-7xl animate-float transition-all duration-1000 ${
+              isPulseDark ? "text-gray-500/40" : "text-red-500/40"
+            }`}>"</div>
+            <div className={`absolute -bottom-6 -right-6 text-7xl animate-float delay-1000 transition-all duration-1000 ${
+              isPulseDark ? "text-gray-600/40" : "text-red-600/40"
+            }`}>"</div>
           </div>
           
-          {/* Interactive Tab Indicators */}
+          {/* Interactive Tab Indicators with theme colors */}
           <div className="flex justify-center space-x-4 mb-8">
             {tabs.map((_, index) => (
               <button
@@ -465,14 +591,17 @@ const Hero = () => {
                 onClick={() => setActiveTab(index)}
                 className={`w-12 h-2 rounded-full transition-all duration-500 hover:scale-110 ${
                   activeTab === index 
-                    ? 'bg-gradient-to-r from-red-500 to-red-700 shadow-lg shadow-red-500/50' 
+                    ? `shadow-lg ${isPulseDark 
+                        ? 'bg-gradient-to-r from-gray-500 to-gray-700 shadow-gray-500/50' 
+                        : 'bg-gradient-to-r from-red-500 to-red-700 shadow-red-500/50'
+                      }` 
                     : 'bg-gray-700 hover:bg-gray-600'
                 }`}
               />
             ))}
           </div>
           
-          {/* Interactive Dots */}
+          {/* Interactive Dots with theme colors */}
           <div className="flex justify-center space-x-4 mb-8">
             {tabs.map((_, index) => (
               <button
@@ -480,7 +609,10 @@ const Hero = () => {
                 onClick={() => setActiveTab(index)}
                 className={`w-3 h-3 rounded-full transition-all duration-300 hover:scale-125 ${
                   activeTab === index 
-                    ? 'bg-red-500 shadow-lg shadow-red-500/50 animate-pulse' 
+                    ? `shadow-lg animate-pulse ${isPulseDark 
+                        ? 'bg-gray-500 shadow-gray-500/50' 
+                        : 'bg-red-500 shadow-red-500/50'
+                      }` 
                     : 'bg-gray-600 hover:bg-gray-500'
                 }`}
               />
@@ -488,7 +620,7 @@ const Hero = () => {
           </div>
         </div>
         
-        {/* Tab Content with smooth transitions */}
+        {/* Tab Content with smooth transitions and theme colors */}
         <div className="animate-slide-up delay-700">
           <div className="relative h-48 mb-8">
             {tabs.map((tab, index) => (
@@ -516,18 +648,26 @@ const Hero = () => {
           </div>
         </div>
         
-        {/* Enhanced description with more animations */}
+        {/* Enhanced description with more animations and theme colors */}
         <div className="animate-slide-up delay-1000">
           <p className="text-xl md:text-2xl lg:text-3xl text-gray-300 max-w-4xl mx-auto leading-relaxed mb-4">
             <span className="inline-block animate-fade-in-word">We're</span>{" "}
             <span className="inline-block animate-fade-in-word delay-100">crafting</span>{" "}
             <span className="inline-block animate-fade-in-word delay-200">something</span>{" "}
-            <span className="inline-block animate-fade-in-word delay-300 bg-gradient-to-r from-red-400 to-red-600 bg-clip-text text-transparent font-semibold">extraordinary</span>{" "}
+            <span className={`inline-block animate-fade-in-word delay-300 bg-clip-text text-transparent font-semibold transition-all duration-1000 ${
+              isPulseDark 
+                ? "bg-gradient-to-r from-gray-400 to-gray-600" 
+                : "bg-gradient-to-r from-red-400 to-red-600"
+            }`}>extraordinary</span>{" "}
             <span className="inline-block animate-fade-in-word delay-400">for</span>{" "}
             <span className="inline-block animate-fade-in-word delay-500">the</span>{" "}
             <span className="inline-block animate-fade-in-word delay-600">future</span>{" "}
             <span className="inline-block animate-fade-in-word delay-700">of</span>{" "}
-            <span className="inline-block animate-fade-in-word delay-800 bg-gradient-to-r from-red-500 to-red-700 bg-clip-text text-transparent font-semibold">e-commerce</span>.
+            <span className={`inline-block animate-fade-in-word delay-800 bg-clip-text text-transparent font-semibold transition-all duration-1000 ${
+              isPulseDark 
+                ? "bg-gradient-to-r from-gray-500 to-gray-700" 
+                : "bg-gradient-to-r from-red-500 to-red-700"
+            }`}>e-commerce</span>.
           </p>
           <p className="text-lg md:text-xl text-gray-400 animate-fade-in delay-1200">
             Get ready to experience shopping like never before.
@@ -538,15 +678,27 @@ const Hero = () => {
         <PoweredBy />
       </div>
       
-      {/* Enhanced floating elements with red theme */}
-      <div className="absolute top-16 left-8 w-4 h-4 bg-red-500/50 rounded-full animate-float-random"></div>
-      <div className="absolute top-32 right-16 w-3 h-3 bg-red-600/50 rounded-full animate-float-random delay-500"></div>
-      <div className="absolute bottom-24 left-16 w-5 h-5 bg-red-700/50 rounded-full animate-float-random delay-1000"></div>
-      <div className="absolute bottom-40 right-12 w-2 h-2 bg-red-800/50 rounded-full animate-float-random delay-1500"></div>
+      {/* Enhanced floating elements with theme colors */}
+      <div className={`absolute top-16 left-8 w-4 h-4 rounded-full animate-float-random transition-all duration-1000 ${
+        isPulseDark ? "bg-gray-500/50" : "bg-red-500/50"
+      }`}></div>
+      <div className={`absolute top-32 right-16 w-3 h-3 rounded-full animate-float-random delay-500 transition-all duration-1000 ${
+        isPulseDark ? "bg-gray-600/50" : "bg-red-600/50"
+      }`}></div>
+      <div className={`absolute bottom-24 left-16 w-5 h-5 rounded-full animate-float-random delay-1000 transition-all duration-1000 ${
+        isPulseDark ? "bg-gray-700/50" : "bg-red-700/50"
+      }`}></div>
+      <div className={`absolute bottom-40 right-12 w-2 h-2 rounded-full animate-float-random delay-1500 transition-all duration-1000 ${
+        isPulseDark ? "bg-gray-800/50" : "bg-red-800/50"
+      }`}></div>
       
-      {/* Shooting stars effect with red glow */}
-      <div className="absolute top-1/4 left-0 w-1 h-1 bg-red-400 rounded-full animate-[shooting-star_3s_linear_infinite]"></div>
-      <div className="absolute top-1/2 right-0 w-1 h-1 bg-red-500 rounded-full animate-[shooting-star_4s_linear_infinite_1s]"></div>
+      {/* Shooting stars effect with theme colors */}
+      <div className={`absolute top-1/4 left-0 w-1 h-1 rounded-full animate-[shooting-star_3s_linear_infinite] transition-all duration-1000 ${
+        isPulseDark ? "bg-gray-400" : "bg-red-400"
+      }`}></div>
+      <div className={`absolute top-1/2 right-0 w-1 h-1 rounded-full animate-[shooting-star_4s_linear_infinite_1s] transition-all duration-1000 ${
+        isPulseDark ? "bg-gray-500" : "bg-red-500"
+      }`}></div>
     </div>
   );
 };
