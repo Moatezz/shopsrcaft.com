@@ -5,7 +5,7 @@ import { PoweredBy } from "./PoweredBy";
 const Hero = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [lines, setLines] = useState<Array<{ x1: number; y1: number; x2: number; y2: number; opacity: number }>>([]);
+  const [lines, setLines] = useState<Array<{ x1: number; y1: number; x2: number; y2: number; opacity: number; strokeWidth: number }>>([]);
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -59,7 +59,7 @@ const Hero = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Enhanced spider web cursor tracking
+  // Complex spider web cursor tracking with 100+ lines
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (containerRef.current) {
@@ -68,57 +68,232 @@ const Hero = () => {
         const y = e.clientY - rect.top;
         setMousePosition({ x, y });
 
-        // Create spider web effect
+        // Create complex spider web effect with multiple layers
         const newLines = [];
-        const webPoints = [
-          { x: rect.width * 0.2, y: rect.height * 0.2 },
-          { x: rect.width * 0.8, y: rect.height * 0.2 },
-          { x: rect.width * 0.1, y: rect.height * 0.5 },
-          { x: rect.width * 0.9, y: rect.height * 0.5 },
-          { x: rect.width * 0.3, y: rect.height * 0.8 },
-          { x: rect.width * 0.7, y: rect.height * 0.8 },
-          { x: rect.width * 0.5, y: rect.height * 0.1 },
-          { x: rect.width * 0.5, y: rect.height * 0.9 },
-          { x: rect.width * 0.15, y: rect.height * 0.35 },
-          { x: rect.width * 0.85, y: rect.height * 0.65 },
+        
+        // Create a dense grid of anchor points for the web
+        const gridSize = 8; // 8x8 grid = 64 anchor points
+        const webPoints = [];
+        
+        // Generate grid-based anchor points
+        for (let i = 0; i < gridSize; i++) {
+          for (let j = 0; j < gridSize; j++) {
+            webPoints.push({
+              x: (rect.width / (gridSize - 1)) * i,
+              y: (rect.height / (gridSize - 1)) * j,
+              id: `grid-${i}-${j}`
+            });
+          }
+        }
+        
+        // Add random scattered points for more organic feel
+        const randomPoints = [
+          { x: rect.width * 0.15, y: rect.height * 0.25, id: 'r1' },
+          { x: rect.width * 0.85, y: rect.height * 0.15, id: 'r2' },
+          { x: rect.width * 0.25, y: rect.height * 0.75, id: 'r3' },
+          { x: rect.width * 0.75, y: rect.height * 0.85, id: 'r4' },
+          { x: rect.width * 0.45, y: rect.height * 0.35, id: 'r5' },
+          { x: rect.width * 0.65, y: rect.height * 0.55, id: 'r6' },
+          { x: rect.width * 0.35, y: rect.height * 0.65, id: 'r7' },
+          { x: rect.width * 0.55, y: rect.height * 0.25, id: 'r8' },
         ];
+        
+        const allPoints = [...webPoints, ...randomPoints];
 
-        // Connect cursor to multiple web points
-        webPoints.forEach((point, index) => {
+        // 1. Cursor to nearby points (radial connections)
+        allPoints.forEach((point) => {
           const distance = Math.sqrt((x - point.x) ** 2 + (y - point.y) ** 2);
-          const maxDistance = 400;
+          const maxDistance = 300;
           
           if (distance < maxDistance) {
-            const opacity = Math.max(0, 0.8 - (distance / maxDistance));
+            const opacity = Math.max(0, 0.9 - (distance / maxDistance));
+            const strokeWidth = opacity > 0.6 ? 2 : 1;
             newLines.push({
               x1: point.x,
               y1: point.y,
               x2: x,
               y2: y,
-              opacity: opacity
+              opacity: opacity,
+              strokeWidth: strokeWidth
             });
           }
         });
 
-        // Create interconnecting web lines between points
-        for (let i = 0; i < webPoints.length; i++) {
-          for (let j = i + 1; j < webPoints.length; j++) {
-            const point1 = webPoints[i];
-            const point2 = webPoints[j];
-            const pointDistance = Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
-            const cursorDistance1 = Math.sqrt((x - point1.x) ** 2 + (y - point1.y) ** 2);
-            const cursorDistance2 = Math.sqrt((x - point2.x) ** 2 + (y - point2.y) ** 2);
+        // 2. Create horizontal web lines
+        for (let i = 0; i < gridSize; i++) {
+          for (let j = 0; j < gridSize - 1; j++) {
+            const point1 = webPoints[i * gridSize + j];
+            const point2 = webPoints[i * gridSize + j + 1];
+            const cursorDistance = Math.min(
+              Math.sqrt((x - point1.x) ** 2 + (y - point1.y) ** 2),
+              Math.sqrt((x - point2.x) ** 2 + (y - point2.y) ** 2)
+            );
             
-            if (pointDistance < 300 && (cursorDistance1 < 200 || cursorDistance2 < 200)) {
-              const opacity = Math.max(0, 0.3 - (Math.min(cursorDistance1, cursorDistance2) / 400));
+            if (cursorDistance < 250) {
+              const opacity = Math.max(0, 0.4 - (cursorDistance / 400));
               newLines.push({
                 x1: point1.x,
                 y1: point1.y,
                 x2: point2.x,
                 y2: point2.y,
-                opacity: opacity
+                opacity: opacity,
+                strokeWidth: 1
               });
             }
+          }
+        }
+
+        // 3. Create vertical web lines
+        for (let i = 0; i < gridSize - 1; i++) {
+          for (let j = 0; j < gridSize; j++) {
+            const point1 = webPoints[i * gridSize + j];
+            const point2 = webPoints[(i + 1) * gridSize + j];
+            const cursorDistance = Math.min(
+              Math.sqrt((x - point1.x) ** 2 + (y - point1.y) ** 2),
+              Math.sqrt((x - point2.x) ** 2 + (y - point2.y) ** 2)
+            );
+            
+            if (cursorDistance < 250) {
+              const opacity = Math.max(0, 0.4 - (cursorDistance / 400));
+              newLines.push({
+                x1: point1.x,
+                y1: point1.y,
+                x2: point2.x,
+                y2: point2.y,
+                opacity: opacity,
+                strokeWidth: 1
+              });
+            }
+          }
+        }
+
+        // 4. Create diagonal connections
+        for (let i = 0; i < gridSize - 1; i++) {
+          for (let j = 0; j < gridSize - 1; j++) {
+            const point1 = webPoints[i * gridSize + j];
+            const point2 = webPoints[(i + 1) * gridSize + j + 1];
+            const point3 = webPoints[i * gridSize + j + 1];
+            const point4 = webPoints[(i + 1) * gridSize + j];
+            
+            const cursorDistance1 = Math.min(
+              Math.sqrt((x - point1.x) ** 2 + (y - point1.y) ** 2),
+              Math.sqrt((x - point2.x) ** 2 + (y - point2.y) ** 2)
+            );
+            
+            const cursorDistance2 = Math.min(
+              Math.sqrt((x - point3.x) ** 2 + (y - point3.y) ** 2),
+              Math.sqrt((x - point4.x) ** 2 + (y - point4.y) ** 2)
+            );
+            
+            if (cursorDistance1 < 200) {
+              const opacity = Math.max(0, 0.3 - (cursorDistance1 / 400));
+              newLines.push({
+                x1: point1.x,
+                y1: point1.y,
+                x2: point2.x,
+                y2: point2.y,
+                opacity: opacity,
+                strokeWidth: 1
+              });
+            }
+            
+            if (cursorDistance2 < 200) {
+              const opacity = Math.max(0, 0.3 - (cursorDistance2 / 400));
+              newLines.push({
+                x1: point3.x,
+                y1: point3.y,
+                x2: point4.x,
+                y2: point4.y,
+                opacity: opacity,
+                strokeWidth: 1
+              });
+            }
+          }
+        }
+
+        // 5. Create concentric circles around cursor
+        const circleRadii = [50, 100, 150, 200];
+        const pointsPerCircle = 16;
+        
+        circleRadii.forEach((radius, radiusIndex) => {
+          const circlePoints = [];
+          for (let i = 0; i < pointsPerCircle; i++) {
+            const angle = (i / pointsPerCircle) * 2 * Math.PI;
+            circlePoints.push({
+              x: x + Math.cos(angle) * radius,
+              y: y + Math.sin(angle) * radius
+            });
+          }
+          
+          // Connect circle points
+          for (let i = 0; i < circlePoints.length; i++) {
+            const nextIndex = (i + 1) % circlePoints.length;
+            const opacity = Math.max(0, 0.3 - (radiusIndex * 0.05));
+            
+            if (circlePoints[i].x > 0 && circlePoints[i].x < rect.width && 
+                circlePoints[i].y > 0 && circlePoints[i].y < rect.height &&
+                circlePoints[nextIndex].x > 0 && circlePoints[nextIndex].x < rect.width && 
+                circlePoints[nextIndex].y > 0 && circlePoints[nextIndex].y < rect.height) {
+              newLines.push({
+                x1: circlePoints[i].x,
+                y1: circlePoints[i].y,
+                x2: circlePoints[nextIndex].x,
+                y2: circlePoints[nextIndex].y,
+                opacity: opacity,
+                strokeWidth: 1
+              });
+            }
+          }
+        });
+
+        // 6. Connect random points to create more complex web patterns
+        randomPoints.forEach((point1, index1) => {
+          randomPoints.forEach((point2, index2) => {
+            if (index1 !== index2) {
+              const pointDistance = Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
+              const cursorDistance = Math.min(
+                Math.sqrt((x - point1.x) ** 2 + (y - point1.y) ** 2),
+                Math.sqrt((x - point2.x) ** 2 + (y - point2.y) ** 2)
+              );
+              
+              if (pointDistance < 400 && cursorDistance < 300) {
+                const opacity = Math.max(0, 0.5 - (cursorDistance / 300));
+                newLines.push({
+                  x1: point1.x,
+                  y1: point1.y,
+                  x2: point2.x,
+                  y2: point2.y,
+                  opacity: opacity,
+                  strokeWidth: opacity > 0.3 ? 2 : 1
+                });
+              }
+            }
+          });
+        });
+
+        // 7. Create spiral connections from cursor
+        const spiralPoints = [];
+        for (let i = 0; i < 20; i++) {
+          const angle = (i / 20) * 4 * Math.PI;
+          const radius = i * 8;
+          spiralPoints.push({
+            x: x + Math.cos(angle) * radius,
+            y: y + Math.sin(angle) * radius
+          });
+        }
+        
+        for (let i = 0; i < spiralPoints.length - 1; i++) {
+          if (spiralPoints[i].x > 0 && spiralPoints[i].x < rect.width && 
+              spiralPoints[i].y > 0 && spiralPoints[i].y < rect.height) {
+            const opacity = Math.max(0, 0.6 - (i * 0.03));
+            newLines.push({
+              x1: spiralPoints[i].x,
+              y1: spiralPoints[i].y,
+              x2: spiralPoints[i + 1].x,
+              y2: spiralPoints[i + 1].y,
+              opacity: opacity,
+              strokeWidth: 1
+            });
           }
         }
 
@@ -145,7 +320,7 @@ const Hero = () => {
       ref={containerRef}
       className="flex flex-col items-center justify-center min-h-screen px-4 text-center relative overflow-hidden"
     >
-      {/* Enhanced spider web cursor tracking */}
+      {/* Complex spider web cursor tracking */}
       <svg 
         className="absolute inset-0 w-full h-full pointer-events-none z-10"
         style={{ mixBlendMode: 'screen' }}
@@ -158,7 +333,7 @@ const Hero = () => {
             x2={line.x2}
             y2={line.y2}
             stroke="url(#redGradient)"
-            strokeWidth={line.opacity > 0.5 ? "2" : "1"}
+            strokeWidth={line.strokeWidth}
             opacity={line.opacity}
             className="animate-pulse"
           />
