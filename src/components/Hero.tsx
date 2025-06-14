@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Logo } from "./Logo";
 import { PoweredBy } from "./PoweredBy";
@@ -7,6 +6,12 @@ const Hero = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [lines, setLines] = useState<Array<{ x1: number; y1: number; x2: number; y2: number; opacity: number }>>([]);
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
   const containerRef = useRef<HTMLDivElement>(null);
   
   const tabs = [
@@ -18,7 +23,7 @@ const Hero = () => {
     },
     {
       title: "Shopify But Free",
-      subtitle: "All Features, Zero Cost",
+      subtitle: "All Features, Zero Cost", 
       description: "Get all the powerful features of premium platforms without spending a dime. Professional templates, payment processing, and analytics included.",
       accent: "from-red-600 to-red-800"
     },
@@ -30,7 +35,31 @@ const Hero = () => {
     }
   ];
 
-  // Handle mouse movement for cursor tracking
+  // Countdown timer effect
+  useEffect(() => {
+    const targetDate = new Date('2025-06-22T00:00:00').getTime();
+    
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const difference = targetDate - now;
+      
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((difference % (1000 * 60)) / 1000)
+        });
+      }
+    };
+    
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // Enhanced spider web cursor tracking
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (containerRef.current) {
@@ -39,35 +68,57 @@ const Hero = () => {
         const y = e.clientY - rect.top;
         setMousePosition({ x, y });
 
-        // Create new lines that connect to mouse position
+        // Create spider web effect
         const newLines = [];
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        
-        // Add main line from center to cursor
-        newLines.push({
-          x1: centerX,
-          y1: centerY,
-          x2: x,
-          y2: y,
-          opacity: 0.6
-        });
+        const webPoints = [
+          { x: rect.width * 0.2, y: rect.height * 0.2 },
+          { x: rect.width * 0.8, y: rect.height * 0.2 },
+          { x: rect.width * 0.1, y: rect.height * 0.5 },
+          { x: rect.width * 0.9, y: rect.height * 0.5 },
+          { x: rect.width * 0.3, y: rect.height * 0.8 },
+          { x: rect.width * 0.7, y: rect.height * 0.8 },
+          { x: rect.width * 0.5, y: rect.height * 0.1 },
+          { x: rect.width * 0.5, y: rect.height * 0.9 },
+          { x: rect.width * 0.15, y: rect.height * 0.35 },
+          { x: rect.width * 0.85, y: rect.height * 0.65 },
+        ];
 
-        // Add web lines from random points to cursor
-        for (let i = 0; i < 5; i++) {
-          const randomX = Math.random() * rect.width;
-          const randomY = Math.random() * rect.height;
-          const distance = Math.sqrt((x - randomX) ** 2 + (y - randomY) ** 2);
-          const maxDistance = 300;
+        // Connect cursor to multiple web points
+        webPoints.forEach((point, index) => {
+          const distance = Math.sqrt((x - point.x) ** 2 + (y - point.y) ** 2);
+          const maxDistance = 400;
           
           if (distance < maxDistance) {
+            const opacity = Math.max(0, 0.8 - (distance / maxDistance));
             newLines.push({
-              x1: randomX,
-              y1: randomY,
+              x1: point.x,
+              y1: point.y,
               x2: x,
               y2: y,
-              opacity: Math.max(0, 0.4 - (distance / maxDistance))
+              opacity: opacity
             });
+          }
+        });
+
+        // Create interconnecting web lines between points
+        for (let i = 0; i < webPoints.length; i++) {
+          for (let j = i + 1; j < webPoints.length; j++) {
+            const point1 = webPoints[i];
+            const point2 = webPoints[j];
+            const pointDistance = Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2);
+            const cursorDistance1 = Math.sqrt((x - point1.x) ** 2 + (y - point1.y) ** 2);
+            const cursorDistance2 = Math.sqrt((x - point2.x) ** 2 + (y - point2.y) ** 2);
+            
+            if (pointDistance < 300 && (cursorDistance1 < 200 || cursorDistance2 < 200)) {
+              const opacity = Math.max(0, 0.3 - (Math.min(cursorDistance1, cursorDistance2) / 400));
+              newLines.push({
+                x1: point1.x,
+                y1: point1.y,
+                x2: point2.x,
+                y2: point2.y,
+                opacity: opacity
+              });
+            }
           }
         }
 
@@ -94,7 +145,7 @@ const Hero = () => {
       ref={containerRef}
       className="flex flex-col items-center justify-center min-h-screen px-4 text-center relative overflow-hidden"
     >
-      {/* Cursor tracking web lines */}
+      {/* Enhanced spider web cursor tracking */}
       <svg 
         className="absolute inset-0 w-full h-full pointer-events-none z-10"
         style={{ mixBlendMode: 'screen' }}
@@ -107,7 +158,7 @@ const Hero = () => {
             x2={line.x2}
             y2={line.y2}
             stroke="url(#redGradient)"
-            strokeWidth="1"
+            strokeWidth={line.opacity > 0.5 ? "2" : "1"}
             opacity={line.opacity}
             className="animate-pulse"
           />
@@ -179,6 +230,42 @@ const Hero = () => {
               COMING SOON
             </p>
             <div className="absolute inset-0 text-4xl md:text-5xl lg:text-6xl font-light text-transparent bg-gradient-to-r from-red-500 via-red-600 to-red-800 bg-clip-text animate-gradient-shift opacity-60"></div>
+          </div>
+          
+          {/* Countdown Timer */}
+          <div className="mt-8 animate-slide-up delay-500">
+            <div className="flex justify-center items-center space-x-4 md:space-x-8">
+              <div className="text-center">
+                <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-lg p-3 md:p-4 shadow-lg shadow-red-500/30 border border-red-500/30">
+                  <div className="text-2xl md:text-3xl font-bold text-white">{timeLeft.days}</div>
+                  <div className="text-xs md:text-sm text-red-200 uppercase tracking-wider">Days</div>
+                </div>
+              </div>
+              <div className="text-red-400 text-2xl md:text-3xl animate-pulse">:</div>
+              <div className="text-center">
+                <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-lg p-3 md:p-4 shadow-lg shadow-red-500/30 border border-red-500/30">
+                  <div className="text-2xl md:text-3xl font-bold text-white">{timeLeft.hours}</div>
+                  <div className="text-xs md:text-sm text-red-200 uppercase tracking-wider">Hours</div>
+                </div>
+              </div>
+              <div className="text-red-400 text-2xl md:text-3xl animate-pulse">:</div>
+              <div className="text-center">
+                <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-lg p-3 md:p-4 shadow-lg shadow-red-500/30 border border-red-500/30">
+                  <div className="text-2xl md:text-3xl font-bold text-white">{timeLeft.minutes}</div>
+                  <div className="text-xs md:text-sm text-red-200 uppercase tracking-wider">Minutes</div>
+                </div>
+              </div>
+              <div className="text-red-400 text-2xl md:text-3xl animate-pulse">:</div>
+              <div className="text-center">
+                <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-lg p-3 md:p-4 shadow-lg shadow-red-500/30 border border-red-500/30">
+                  <div className="text-2xl md:text-3xl font-bold text-white animate-pulse">{timeLeft.seconds}</div>
+                  <div className="text-xs md:text-sm text-red-200 uppercase tracking-wider">Seconds</div>
+                </div>
+              </div>
+            </div>
+            <p className="text-red-300 text-sm md:text-base mt-4 animate-fade-in delay-1000">
+              Launch Date: June 22, 2025
+            </p>
           </div>
         </div>
         
