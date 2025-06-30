@@ -561,7 +561,7 @@ const Hero = () => {
               className={`text-sm md:text-base mt-4 animate-fade-in delay-1000 transition-all duration-[1500ms] ease-in-out ${
                 isPulseDark ? 'text-gray-300' : 'text-red-300'
               }`}>
-              Launch Date: June 22, 2025
+              Launch Date: July 5, 2025
             </p>
           </div>
         </div>
