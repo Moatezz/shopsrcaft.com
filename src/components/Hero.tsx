@@ -83,6 +83,7 @@ const Hero = () => {
         setMousePosition({x, y});
 
         // Create comprehensive tracking lines from fixed positions
+        // Create comprehensive tracking lines from fixed positions
         const newLines = [];
 
         // 1. Grid-based tracking points across the entire screen
@@ -232,6 +233,8 @@ const Hero = () => {
             newLines.push({
               x1: point.x,
               y1: point.y,
+              x1: point.x,
+              y1: point.y,
               x2: x,
               y2: y,
               opacity: opacity,
@@ -324,7 +327,10 @@ const Hero = () => {
             y2={line.y2}
             stroke={`url(#${themeColors.webGradient})`}
             strokeWidth={line.strokeWidth}
+            stroke={`url(#${themeColors.webGradient})`}
+            strokeWidth={line.strokeWidth}
             opacity={line.opacity}
+            className="transition-all duration-75"
             className="transition-all duration-75"
           />
         ))}
@@ -333,6 +339,11 @@ const Hero = () => {
             <stop offset="0%" stopColor="#ef4444" />
             <stop offset="50%" stopColor="#dc2626" />
             <stop offset="100%" stopColor="#b91c1c" />
+          </linearGradient>
+          <linearGradient id="grayGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#6b7280" />
+            <stop offset="50%" stopColor="#4b5563" />
+            <stop offset="100%" stopColor="#374151" />
           </linearGradient>
           <linearGradient id="grayGradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#6b7280" />
@@ -391,6 +402,7 @@ const Hero = () => {
           }`}></div>
 
         {/* Spinning Diamond Element with smooth theme transitions */}
+        {/* Spinning Diamond Element with smooth theme transitions */}
         <div className="absolute top-1/4 right-1/4 animate-spin-slow">
           <div className="relative w-16 h-16">
             <div
@@ -413,6 +425,7 @@ const Hero = () => {
           </div>
         </div>
 
+        {/* Spinning Hexagon Element with smooth theme transitions */}
         {/* Spinning Hexagon Element with smooth theme transitions */}
         <div className="absolute bottom-1/4 left-1/4 animate-spin-reverse">
           <div className="relative w-12 h-12">
